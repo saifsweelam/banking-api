@@ -36,8 +36,7 @@ def create_app(test_config=None):
         body = request.get_json()
         account_id = body.get("account_id", None)
         amount = body.get("amount", None)
-        account_type = body.get("account_type", None) # TODO: update that key 
-
+        transaction_type = body.get("transaction_type", None) # TODO: update that key 
 
         # validation
         try:
@@ -50,7 +49,11 @@ def create_app(test_config=None):
                                         account_type=account_type,
                                         date=datetime.now())
 
-            account.balance -= amount
+            if transaction_type == "Withdraw":
+                account.balance -= amount
+            elif transaction_type == "Deposit":
+                account.balance += amount
+
             # TODO:commit transaction
             db.session.add(new_transaction) 
             db.session.commit()
