@@ -1,7 +1,16 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+
+from models import create_models
+
+app = Flask(__name__)
+db_data = create_models(app)
+
+db = db_data['db']
+Account = db_data['Account']
+Transaction = db_data['Transaction']
 
 """
+
 (Ayman)
 GET All Accounts
 GET All Transactions
@@ -17,5 +26,3 @@ POST Transaction (Account Balance Must be > 0)
 PATCH Account
 
 """
-
-app = Flask(__name__)
