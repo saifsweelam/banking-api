@@ -17,7 +17,7 @@ def create_models(app):
     type = db.Column(db.String(10))
     date = db.Column(db.DateTime, nullable=False)
     def __repr__(self):
-      return f'<Transaction {self.id} {self.acount_id} -  {self.amount}:{self.type}> '
+      return f'<Transaction {self.id} {self.account_id} -  {self.amount}:{self.type}> '
 
     return {
         'db': db
