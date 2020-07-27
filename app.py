@@ -26,6 +26,63 @@ def create_app(test_config=None):
     Account = db_data['Account']
     Transaction = db_data['Transaction']
 
+    # GET Transaction(only one)
+    # curl http://127.0.0.1:5000/transactions/3
+    @app.route('/transactions/<int:trans_id>')
+    def get_transaction(trans_id):
+        trans = Transaction.query.get(trans_id)
+        if trans is None:
+            abort(404)
+        j_trans = {
+            "id": trans.id,
+            "account_id": trans.account_id,
+            "amount": trans.amount,
+            "type": trans.type,
+            "date": trans.date
+        }
+
+        return jsonify({
+            'success': True,
+            'trans': j_trans
+        })
+
+
+    # POST Account
+    """
+    curl -X POST -H "Content-Type:application/json"
+    -d '{"name":"ali","type=":"Savings","address":"egy cairo",
+    "phone":"01001234567","balance":"1000","active":"true"}'
+    http://127.0.0.1:5000/transactions 
+    """
+    @app.route('/accounts', methods=['POST'])
+    def add_account():
+        body = request.get_json()
+        name = body.get('name')
+        account_type = body.get('type')
+        address = body.get('address')
+        phone = body.get('phone')
+        balance = float(body.get('balance'))
+        active = bool(body.get('active'))
+        try:
+            account = Account(
+                name=name,
+                type=account_type,
+                address=address,
+                phone=phone,
+                balance=balance,
+                active=active
+            )
+            db.session.add(account)
+            account_id = account.id
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'created': account_id
+            })
+        except:
+            db.session.rollback()
+            abort(422)
+
     @app.route("/transactions", methods=["POST"])
     def add_transaction():
         body = request.get_json()
