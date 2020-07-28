@@ -18,7 +18,7 @@ def create_models(app):
         balance = db.Column(db.Float, nullable=False)
         active = db.Column(db.Boolean, default=True)
 
-        transactions = db.relationship('Transaction')
+        transactions = db.relationship('Transaction', backref='account')
 
         def __repr__(self):
             return f'<Account {self.id} {self.name} -  {self.balance}:{self.type}> '
@@ -27,11 +27,11 @@ def create_models(app):
         def serialize(self):
             return {
                 'id': self.id,
-                'name': self.name
-                'type': self.type
-                'address': self.address
-                'phone': self.phone
-                'balance': self.balance
+                'name': self.name,
+                'type': self.type,
+                'address': self.address,
+                'phone': self.phone,
+                'balance': self.balance,
                 'active': self.active
             }
 
@@ -52,9 +52,9 @@ def create_models(app):
         def serialize(self):
             return {
                 'id': self.id,
-                'acount_id': self.acount_id
-                'type': self.type
-                'amount': self.amount
+                'acount_id': self.acount_id,
+                'type': self.type,
+                'amount': self.amount,
                 'date': self.date
             }
 

@@ -57,9 +57,9 @@ def create_app(test_config=None):
     # POST Account
     """
     curl -X POST -H "Content-Type:application/json"
-    -d '{"name":"ali","type=":"Savings","address":"egy cairo",
+    -d '{"name":"ali","type":"Savings","address":"egy cairo",
     "phone":"01001234567","balance":"1000","active":"true"}'
-    http://127.0.0.1:5000/transactions 
+    http://127.0.0.1:5000/accounts 
     """
     @app.route('/accounts', methods=['POST'])
     def add_account():
@@ -80,16 +80,22 @@ def create_app(test_config=None):
                 active=active
             )
             db.session.add(account)
-            serialized = account.serialize()
+            # serialized = account.serialize() # Error when return this object "'dict' object is not callable" 
             db.session.commit()
             return jsonify({
                 'success': True,
-                'created': serialized
+                'account_id': account.id
             })
-        except:
+        except Exception as e:
+            print(str(e))
             db.session.rollback()
             abort(422)
+            
 
+    '''
+    curl http://127.0.0.1:5000/transactions -X POST -H "Content-Type:application/json"
+    -d '{"account_id":1, "amount":500.0, "transaction_type":"deposit"}' 
+    '''
     @app.route("/transactions", methods=["POST"])
     def add_transaction():
         body = request.get_json()
@@ -97,7 +103,6 @@ def create_app(test_config=None):
         amount = body.get("amount", None)
         transaction_type = body.get("transaction_type", None)
 
-        # validation
         try:
             account = Account.query.get(account_id)
             if account is None:
@@ -109,34 +114,90 @@ def create_app(test_config=None):
                 type=transaction_type,
                 date=datetime.now()
             )
-
             if transaction_type.lower() == "withdraw":
                 account.balance -= amount
             elif transaction_type.lower() == "deposit":
                 account.balance += amount
 
-            # TODO:commit transaction
             db.session.add(new_transaction)
             db.session.commit()
+             
+            return jsonify({
+                "success": True,
+                "transaction_id":new_transaction.id
+            })
         except Exception as e:
             print(str(e))
+            db.session.rollback()
             abort(422)
         finally:
             db.session.close()
 
+    '''
+        Activate and deactivate the account.
+        curl http://127.0.0.1:5000/accounts/1 -X PATCH
+    '''
     @app.route("/accounts/<int:account_id>", methods=['PATCH'])
     def toggle_account_activation(account_id):
-        '''Activate and deactivate the account.'''
         try:
             account = Account.query.get(account_id)
             if account == None:
                 raise Exception("Invalid Account Id")
-
+            
             account.active = not account.active
-            # TODO: commit changes
+            current_status = account.active
+
             db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "active": current_status
+            })
         except Exception as e:
             print(str(e))
+            db.session.rollback()
             abort(422)
         finally:
             db.session.close()
+
+    @app.errorhandler(400)
+    def unprocessable(error):
+        return jsonify({
+            'success':False,
+            'error':400,
+            'message':'Bad request'
+        }), 400
+
+    @app.errorhandler(404)
+    def notfound(error):
+        return jsonify({
+            'success':False,
+            'error':404,
+            'message':'Resource not found'
+        }), 404
+
+    @app.errorhandler(405)
+    def unprocessable(error):
+        return jsonify({
+            'success':False,
+            'error':405,
+            'message':'Method not allowed'
+        }), 405
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            'success':False,
+            'error':422,
+            'message':'Unprocessable entity'
+        }), 422
+
+    @app.errorhandler(500)
+    def unprocessable(error):
+        return jsonify({
+            'success':False,
+            'error':500,
+            'message':'Internal server error'
+        }), 500
+
+    return app
