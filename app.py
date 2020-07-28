@@ -5,17 +5,6 @@ from models import create_models
 from datetime import datetime
 
 
-"""
-(Ayman)
-GET All Accounts
-GET All Transactions
-(Ahmed)
-GET Transactions by Account ID
-POST Acount
-(Mohamed Zaitoon)
-POST Transaction (Account Balance Must be > 0)
-PATCH Account
-"""
 
 
 def create_app(test_config=None):
@@ -25,6 +14,42 @@ def create_app(test_config=None):
     db = db_data['db']
     Account = db_data['Account']
     Transaction = db_data['Transaction']
+    """
+    (Ayman)
+    GET All Accounts
+    GET All Transactions
+    (Ahmed)
+    GET Transactions by Account ID
+    POST Acount
+    (Mohamed Zaitoon)
+    POST Transaction (Account Balance Must be > 0)
+    PATCH Account
+    """
+    #GET Accounts
+    # curl http://127.0.0.1:5000/accounts
+    @app.route('/accounts')
+    def get_accounts():
+        accounts_query = Account.query
+        accounts = accounts_query.all()
+        accounts_count = accounts_query.count()
+
+        return jsonify({
+            'accounts': accounts,
+            'accounts_count': accounts_count
+        })
+
+    #GET Accounts
+    # curl http://127.0.0.1:5000/accounts
+    @app.route('/transactions')
+    def get_transactions():
+        transactions_query = Transaction.query
+        transactions = transactions_query.all()
+        transactions_count = transactions_query.count()
+
+        return jsonify({
+            'transactions': transactions,
+            'transactions_count': transactions_count
+        })
 
     # GET Transaction(only one)
     # curl http://127.0.0.1:5000/transactions/3
