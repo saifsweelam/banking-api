@@ -14,17 +14,7 @@ def create_app(test_config=None):
     db = db_data['db']
     Account = db_data['Account']
     Transaction = db_data['Transaction']
-    """
-    (Ayman)
-    GET All Accounts
-    GET All Transactions
-    (Ahmed)
-    GET Transactions by Account ID
-    POST Acount
-    (Mohamed Zaitoon)
-    POST Transaction (Account Balance Must be > 0)
-    PATCH Account
-    """
+
     #GET Accounts
     # curl http://127.0.0.1:5000/accounts
     @app.route('/accounts')
