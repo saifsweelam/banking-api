@@ -52,7 +52,7 @@ def create_models(app):
         def serialize(self):
             return {
                 'id': self.id,
-                'acount_id': self.acount_id,
+                'account_id': self.account_id,
                 'type': self.type,
                 'amount': self.amount,
                 'date': self.date

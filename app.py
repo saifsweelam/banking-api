@@ -5,8 +5,6 @@ from models import create_models
 from datetime import datetime
 
 
-
-
 def create_app(test_config=None):
     app = Flask(__name__)
     db_data = create_models(app)
@@ -15,54 +13,60 @@ def create_app(test_config=None):
     Account = db_data['Account']
     Transaction = db_data['Transaction']
 
-    #GET Accounts
-    # curl http://127.0.0.1:5000/accounts
     @app.route('/accounts')
     def get_accounts():
+        """
+        GET Accounts
+        curl http://127.0.0.1:5000/accounts
+        """
         accounts_query = Account.query
         accounts = accounts_query.all()
         accounts_count = accounts_query.count()
 
         return jsonify({
-            'accounts': accounts,
+            'accounts': [a.serialize for a in accounts],
             'accounts_count': accounts_count
         })
 
-    #GET Accounts
-    # curl http://127.0.0.1:5000/accounts
     @app.route('/transactions')
     def get_transactions():
+        """
+        GET Accounts
+        curl http://127.0.0.1:5000/accounts
+        """
         transactions_query = Transaction.query
         transactions = transactions_query.all()
         transactions_count = transactions_query.count()
 
         return jsonify({
-            'transactions': transactions,
+            'transactions': [t.serialize for t in transactions],
             'transactions_count': transactions_count
         })
 
-    # GET Transaction(only one)
-    # curl http://127.0.0.1:5000/transactions/3
     @app.route('/transactions/<int:trans_id>')
     def get_transaction(trans_id):
+        """
+        GET Transaction(only one)
+        curl http://127.0.0.1:5000/transactions/3
+        """
         trans = Transaction.query.get(trans_id)
         if trans is None:
             abort(404)
 
         return jsonify({
             'success': True,
-            'transaction': trans.serialize()
+            'transaction': trans.serialize
         })
 
-    # POST Account
-    """
-    curl -X POST -H "Content-Type:application/json"
-    -d '{"name":"ali","type":"Savings","address":"egy cairo",
-    "phone":"01001234567","balance":"1000","active":"true"}'
-    http://127.0.0.1:5000/accounts 
-    """
     @app.route('/accounts', methods=['POST'])
     def add_account():
+        """
+        POST Account
+        curl -X POST -H "Content-Type:application/json"
+        -d '{"name":"ali","type":"Savings","address":"egy cairo",
+        "phone":"01001234567","balance":"1000","active":"true"}'
+        http://127.0.0.1:5000/accounts 
+        """
         body = request.get_json()
         name = body.get('name')
         account_type = body.get('type')
@@ -80,24 +84,25 @@ def create_app(test_config=None):
                 active=active
             )
             db.session.add(account)
-            # serialized = account.serialize() # Error when return this object "'dict' object is not callable" 
+            # Error when return this object "'dict' object is not callable"
+            serialized = account.serialize
             db.session.commit()
             return jsonify({
                 'success': True,
-                'account_id': account.id
+                'account': serialized
             })
         except Exception as e:
             print(str(e))
             db.session.rollback()
             abort(422)
-            
 
-    '''
-    curl http://127.0.0.1:5000/transactions -X POST -H "Content-Type:application/json"
-    -d '{"account_id":1, "amount":500.0, "transaction_type":"deposit"}' 
-    '''
     @app.route("/transactions", methods=["POST"])
     def add_transaction():
+        """
+        POST Transaction
+        curl http://127.0.0.1:5000/transactions -X POST -H "Content-Type:application/json"
+        -d '{"account_id":1, "amount":500.0, "transaction_type":"deposit"}'
+        """
         body = request.get_json()
         account_id = body.get("account_id", None)
         amount = body.get("amount", None)
@@ -120,11 +125,12 @@ def create_app(test_config=None):
                 account.balance += amount
 
             db.session.add(new_transaction)
+            serialized = new_transaction.serialize
             db.session.commit()
-             
+
             return jsonify({
                 "success": True,
-                "transaction_id":new_transaction.id
+                "transaction": serialized
             })
         except Exception as e:
             print(str(e))
@@ -133,22 +139,22 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-        Activate and deactivate the account.
-        curl http://127.0.0.1:5000/accounts/1 -X PATCH
-    '''
     @app.route("/accounts/<int:account_id>", methods=['PATCH'])
     def toggle_account_activation(account_id):
+        '''
+        Activate and deactivate the account.
+        curl http://127.0.0.1:5000/accounts/1 -X PATCH
+        '''
         try:
             account = Account.query.get(account_id)
             if account == None:
                 raise Exception("Invalid Account Id")
-            
+
             account.active = not account.active
             current_status = account.active
 
             db.session.commit()
-            
+
             return jsonify({
                 "success": True,
                 "active": current_status
@@ -161,43 +167,43 @@ def create_app(test_config=None):
             db.session.close()
 
     @app.errorhandler(400)
-    def unprocessable(error):
+    def bad_request(error):
         return jsonify({
-            'success':False,
-            'error':400,
-            'message':'Bad request'
+            'success': False,
+            'error': 400,
+            'message': 'Bad request'
         }), 400
 
     @app.errorhandler(404)
     def notfound(error):
         return jsonify({
-            'success':False,
-            'error':404,
-            'message':'Resource not found'
+            'success': False,
+            'error': 404,
+            'message': 'Resource not found'
         }), 404
 
     @app.errorhandler(405)
-    def unprocessable(error):
+    def not_allowed(error):
         return jsonify({
-            'success':False,
-            'error':405,
-            'message':'Method not allowed'
+            'success': False,
+            'error': 405,
+            'message': 'Method not allowed'
         }), 405
 
     @app.errorhandler(422)
     def unprocessable(error):
         return jsonify({
-            'success':False,
-            'error':422,
-            'message':'Unprocessable entity'
+            'success': False,
+            'error': 422,
+            'message': 'Unprocessable entity'
         }), 422
 
     @app.errorhandler(500)
-    def unprocessable(error):
+    def server_error(error):
         return jsonify({
-            'success':False,
-            'error':500,
-            'message':'Internal server error'
+            'success': False,
+            'error': 500,
+            'message': 'Internal server error'
         }), 500
 
     return app
