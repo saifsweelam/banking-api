@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 
 from models import create_models
 
@@ -33,19 +33,11 @@ def create_app(test_config=None):
         trans = Transaction.query.get(trans_id)
         if trans is None:
             abort(404)
-        j_trans = {
-            "id": trans.id,
-            "account_id": trans.account_id,
-            "amount": trans.amount,
-            "type": trans.type,
-            "date": trans.date
-        }
 
         return jsonify({
             'success': True,
-            'trans': j_trans
+            'transaction': trans.serialize()
         })
-
 
     # POST Account
     """
@@ -73,11 +65,11 @@ def create_app(test_config=None):
                 active=active
             )
             db.session.add(account)
-            account_id = account.id
+            serialized = account.serialize()
             db.session.commit()
             return jsonify({
                 'success': True,
-                'created': account_id
+                'created': serialized
             })
         except:
             db.session.rollback()
